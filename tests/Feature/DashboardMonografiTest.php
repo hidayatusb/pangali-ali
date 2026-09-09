@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Exports\ResidentsExport;
 use App\Livewire\Admin\DownloadablesIndex;
 use App\Livewire\Admin\FishermenIndex;
 use App\Livewire\Admin\NewsIndex;
@@ -16,6 +17,9 @@ use App\Services\DashboardStatsService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Facades\Excel;
 
 it('allows guests to view the beranda dashboard', function () {
     $this->get(route('home'))
@@ -144,6 +148,104 @@ it('allows admin to create a resident', function () {
         ->assertHasNoErrors();
 
     expect(Resident::query()->where('name', 'Siti Penduduk')->exists())->toBeTrue();
+});
+
+it('allows admin to export residents to excel', function () {
+    Excel::fake();
+    Excel::matchByRegex();
+
+    $admin = User::factory()->admin()->create();
+    Resident::factory()->create(['name' => 'Penduduk Ekspor']);
+
+    Livewire::actingAs($admin)
+        ->test(PopulationIndex::class)
+        ->call('export');
+
+    Excel::assertDownloaded('/^data-penduduk-.*\.xlsx$/', function ($export): bool {
+        return $export instanceof ResidentsExport;
+    });
+});
+
+it('allows admin to import residents from excel', function () {
+    $admin = User::factory()->admin()->create();
+
+    $path = 'imports/test-residents.xlsx';
+
+    Excel::store(new class implements FromArray, WithHeadings
+    {
+        public function array(): array
+        {
+            return [
+                ['Budi Import', 'Lingkungan 3, Pangali-Ali', 'Nelayan', 'Laki-laki', '081122334455', 'Kawin', 'Islam'],
+                ['Ani Import', 'Lingkungan 4, Pangali-Ali', 'Pedagang', 'Perempuan', '', 'Belum Kawin', 'Islam'],
+            ];
+        }
+
+        public function headings(): array
+        {
+            return ['nama', 'alamat', 'pekerjaan', 'jenis_kelamin', 'no_hp', 'status_perkawinan', 'agama'];
+        }
+    }, $path);
+
+    $upload = UploadedFile::fake()->createWithContent(
+        'test-residents.xlsx',
+        Storage::get($path)
+    );
+
+    Livewire::actingAs($admin)
+        ->test(PopulationIndex::class)
+        ->call('openImport')
+        ->set('importFile', $upload)
+        ->call('import')
+        ->assertHasNoErrors();
+
+    expect(Resident::query()->where('name', 'Budi Import')->where('occupation', 'Nelayan')->exists())->toBeTrue()
+        ->and(Resident::query()->where('name', 'Ani Import')->where('gender', 'perempuan')->exists())->toBeTrue();
+});
+
+it('skips duplicate residents when the same excel file is imported again', function () {
+    $admin = User::factory()->admin()->create();
+
+    $path = 'imports/test-residents-duplicates.xlsx';
+
+    Excel::store(new class implements FromArray, WithHeadings
+    {
+        public function array(): array
+        {
+            return [
+                ['Sari Duplikat', 'Lingkungan 1, Pangali-Ali', 'Nelayan', 'Perempuan', '081199988877', 'Kawin', 'Islam'],
+            ];
+        }
+
+        public function headings(): array
+        {
+            return ['nama', 'alamat', 'pekerjaan', 'jenis_kelamin', 'no_hp', 'status_perkawinan', 'agama'];
+        }
+    }, $path);
+
+    $upload = fn () => UploadedFile::fake()->createWithContent(
+        'test-residents-duplicates.xlsx',
+        Storage::get($path)
+    );
+
+    Livewire::actingAs($admin)
+        ->test(PopulationIndex::class)
+        ->call('openImport')
+        ->set('importFile', $upload())
+        ->call('import')
+        ->assertHasNoErrors();
+
+    expect(Resident::query()->where('name', 'Sari Duplikat')->count())->toBe(1);
+
+    Livewire::actingAs($admin)
+        ->test(PopulationIndex::class)
+        ->call('openImport')
+        ->set('importFile', $upload())
+        ->call('import')
+        ->assertHasNoErrors()
+        ->assertSee('1 data duplikat dilewati');
+
+    expect(Resident::query()->where('name', 'Sari Duplikat')->count())->toBe(1);
 });
 
 it('allows guests to view a published news detail page', function () {

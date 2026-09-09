@@ -1,8 +1,22 @@
 <div>
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
         <x-page-header title="Kelola Kependudukan" subtitle="Data penduduk Kelurahan Pangali-Ali" />
-        <button type="button" wire:click="create" class="rounded-xl bg-ocean-600 px-4 py-2 text-sm font-semibold text-white hover:bg-ocean-700">+ Tambah Penduduk</button>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" wire:click="export" class="rounded-xl border border-ocean-200 bg-white px-4 py-2 text-sm font-semibold text-ocean-800 hover:bg-ocean-50">
+                Ekspor Excel
+            </button>
+            <button type="button" wire:click="openImport" class="rounded-xl border border-ocean-200 bg-white px-4 py-2 text-sm font-semibold text-ocean-800 hover:bg-ocean-50">
+                Impor Excel
+            </button>
+            <button type="button" wire:click="create" class="rounded-xl bg-ocean-600 px-4 py-2 text-sm font-semibold text-white hover:bg-ocean-700">+ Tambah Penduduk</button>
+        </div>
     </div>
+
+    @if (session('status'))
+        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {{ session('status') }}
+        </div>
+    @endif
 
     <div class="mb-4">
         <input
@@ -12,6 +26,39 @@
             class="w-full max-w-md rounded-xl border border-ocean-200 px-3 py-2 text-sm outline-none ring-ocean-500 focus:border-ocean-500 focus:ring-2"
         >
     </div>
+
+    @if ($showImport)
+        <div class="mb-6 rounded-xl border border-ocean-200 bg-white p-5 shadow-sm">
+            <h2 class="mb-2 text-sm font-bold text-slate-800">Impor Data Penduduk</h2>
+            <p class="mb-4 text-xs text-slate-500">
+                Unggah file .xlsx / .xls / .csv dengan kolom:
+                <span class="font-medium text-slate-700">nama, alamat, pekerjaan, jenis_kelamin, no_hp, status_perkawinan, agama</span>.
+                Nilai jenis kelamin: Laki-laki / Perempuan. Status: Belum Kawin, Kawin, Cerai Hidup, Cerai Mati.
+                Data yang sama persis dengan data yang sudah ada akan dilewati (tidak diduplikasi).
+            </p>
+            <div class="mb-4 flex flex-wrap gap-2">
+                <button type="button" wire:click="downloadTemplate" class="rounded-lg border border-ocean-200 px-3 py-1.5 text-xs font-semibold text-ocean-700 hover:bg-ocean-50">
+                    Unduh Template Excel
+                </button>
+            </div>
+            <form wire:submit="import" class="space-y-3">
+                <div>
+                    <input
+                        type="file"
+                        wire:model="importFile"
+                        accept=".xlsx,.xls,.csv"
+                        class="block w-full rounded-lg border border-ocean-200 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-ocean-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ocean-700 hover:file:bg-ocean-100"
+                    >
+                    <div wire:loading wire:target="importFile" class="mt-1 text-xs text-ocean-600">Mengunggah file...</div>
+                    @error('importFile') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="rounded-lg bg-ocean-600 px-4 py-2 text-sm font-semibold text-white" wire:loading.attr="disabled">Impor Sekarang</button>
+                    <button type="button" wire:click="cancelImport" class="rounded-lg border border-ocean-200 px-4 py-2 text-sm">Batal</button>
+                </div>
+            </form>
+        </div>
+    @endif
 
     @if ($showForm)
         <div class="mb-6 rounded-xl border border-ocean-200 bg-white p-5 shadow-sm">

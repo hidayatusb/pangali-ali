@@ -2,6 +2,9 @@
 
 namespace App\Livewire\Admin;
 
+use App\Exports\ResidentsExport;
+use App\Exports\ResidentsTemplateExport;
+use App\Imports\ResidentsImport;
 use App\Livewire\Concerns\WithSorting;
 use App\Models\Resident;
 use Illuminate\Support\Facades\Gate;
@@ -9,12 +12,17 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 #[Layout('layouts.admin')]
 #[Title('Kelola Kependudukan')]
 class PopulationIndex extends Component
 {
+    use WithFileUploads;
     use WithPagination;
     use WithSorting;
 
@@ -28,6 +36,8 @@ class PopulationIndex extends Component
     public string $search = '';
 
     public bool $showForm = false;
+
+    public bool $showImport = false;
 
     public ?int $editingId = null;
 
@@ -45,6 +55,8 @@ class PopulationIndex extends Component
 
     public string $religion = 'Islam';
 
+    public TemporaryUploadedFile|string|null $importFile = null;
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -54,6 +66,7 @@ class PopulationIndex extends Component
     {
         Gate::authorize('admin');
         $this->resetForm();
+        $this->showImport = false;
         $this->showForm = true;
     }
 
@@ -69,6 +82,7 @@ class PopulationIndex extends Component
         $this->phone = (string) ($resident->phone ?? '');
         $this->marital_status = $resident->marital_status;
         $this->religion = $resident->religion;
+        $this->showImport = false;
         $this->showForm = true;
     }
 
@@ -112,6 +126,78 @@ class PopulationIndex extends Component
     {
         $this->showForm = false;
         $this->resetForm();
+    }
+
+    public function openImport(): void
+    {
+        Gate::authorize('admin');
+        $this->showForm = false;
+        $this->importFile = null;
+        $this->resetValidation();
+        $this->showImport = true;
+    }
+
+    public function cancelImport(): void
+    {
+        $this->showImport = false;
+        $this->importFile = null;
+        $this->resetValidation();
+    }
+
+    public function export(): BinaryFileResponse
+    {
+        Gate::authorize('admin');
+
+        $filename = 'data-penduduk-'.now()->format('Ymd-His').'.xlsx';
+
+        return Excel::download(new ResidentsExport($this->search), $filename);
+    }
+
+    public function downloadTemplate(): BinaryFileResponse
+    {
+        Gate::authorize('admin');
+
+        return Excel::download(new ResidentsTemplateExport, 'template-data-penduduk.xlsx');
+    }
+
+    public function import(): void
+    {
+        Gate::authorize('admin');
+
+        $this->validate([
+            'importFile' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+        ]);
+
+        $beforeCount = Resident::query()->count();
+
+        $import = new ResidentsImport;
+        $import->import($this->importFile);
+
+        $importedCount = max(Resident::query()->count() - $beforeCount, 0);
+        $failureCount = $import->failures()->count();
+        $skippedDuplicates = $import->skippedDuplicates();
+
+        $parts = ["Import selesai: {$importedCount} data baru ditambahkan"];
+
+        if ($skippedDuplicates > 0) {
+            $parts[] = "{$skippedDuplicates} data duplikat dilewati";
+        }
+
+        if ($failureCount > 0) {
+            $messages = $import->failures()
+                ->take(5)
+                ->map(fn ($failure) => 'Baris '.$failure->row().': '.implode(', ', $failure->errors()))
+                ->all();
+
+            $parts[] = "{$failureCount} baris gagal validasi";
+            session()->flash('status', implode('. ', $parts).'. '.implode(' | ', $messages));
+        } else {
+            session()->flash('status', implode('. ', $parts).'.');
+        }
+
+        $this->showImport = false;
+        $this->importFile = null;
+        $this->resetPage();
     }
 
     private function resetForm(): void

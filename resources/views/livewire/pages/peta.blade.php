@@ -2,7 +2,9 @@
     <x-page-header title="Peta Interaktif" subtitle="Zona wilayah Kelurahan Pangali-Ali" />
 
     <div class="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <div id="interactiveMap" class="h-[480px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"></div>
+        <div class="relative z-0 isolate overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div id="interactiveMap" class="h-[480px] w-full"></div>
+        </div>
         <div class="space-y-3">
             @foreach ($zones as $zone)
                 <div class="rounded-xl border border-slate-100 bg-white p-4 shadow-sm" wire:key="zone-{{ $zone->id }}">

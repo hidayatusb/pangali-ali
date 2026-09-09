@@ -46,15 +46,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('fleets', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('type')->nullable();
-            $table->unsignedInteger('count')->default(0);
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
-
         Schema::create('fishery_productions', function (Blueprint $table) {
             $table->id();
             $table->unsignedSmallInteger('year')->unique();
@@ -168,7 +159,6 @@ return new class extends Migration
         Schema::dropIfExists('infrastructures');
         Schema::dropIfExists('commodities');
         Schema::dropIfExists('fishery_productions');
-        Schema::dropIfExists('fleets');
         Schema::dropIfExists('fishermen');
         Schema::dropIfExists('population_stats');
         Schema::dropIfExists('village_profiles');

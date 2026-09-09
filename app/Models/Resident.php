@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Database\Factories\ResidentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,6 +22,12 @@ class Resident extends Model
 {
     /** @use HasFactory<ResidentFactory> */
     use HasFactory;
+
+    #[Scope]
+    protected function fishermen(Builder $query): Builder
+    {
+        return $query->whereRaw('LOWER(occupation) = ?', ['nelayan']);
+    }
 
     public function genderLabel(): string
     {

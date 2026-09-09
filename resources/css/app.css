@@ -27,3 +27,9 @@
         @apply bg-surface font-sans text-slate-800 antialiased;
     }
 }
+
+/* Keep Leaflet panes below sticky header (Leaflet defaults to z-index 400–1000). */
+.leaflet-container {
+    z-index: 0;
+}
+

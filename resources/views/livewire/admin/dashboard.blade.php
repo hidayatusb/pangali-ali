@@ -3,12 +3,12 @@
 
     <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div class="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-            <p class="text-xs text-slate-500">Nelayan</p>
-            <p class="mt-1 text-2xl font-bold">{{ number_format($fishermenCount, 0, ',', '.') }}</p>
+            <p class="text-xs text-slate-500">Penduduk</p>
+            <p class="mt-1 text-2xl font-bold">{{ number_format($residentCount, 0, ',', '.') }}</p>
         </div>
         <div class="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-            <p class="text-xs text-slate-500">Armada</p>
-            <p class="mt-1 text-2xl font-bold">{{ number_format($fleetTotal, 0, ',', '.') }}</p>
+            <p class="text-xs text-slate-500">Nelayan</p>
+            <p class="mt-1 text-2xl font-bold">{{ number_format($fishermenCount, 0, ',', '.') }}</p>
         </div>
         <div class="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
             <p class="text-xs text-slate-500">Produksi Terakhir</p>

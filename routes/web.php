@@ -4,7 +4,6 @@ use App\Livewire\Admin\CommoditiesIndex;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\DownloadablesIndex;
 use App\Livewire\Admin\FishermenIndex;
-use App\Livewire\Admin\FleetsIndex;
 use App\Livewire\Admin\InfrastructuresIndex;
 use App\Livewire\Admin\MapZonesIndex;
 use App\Livewire\Admin\NewsIndex;
@@ -64,7 +63,6 @@ Route::post('/logout', function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboard::class)->name('dashboard');
     Route::get('/nelayan', FishermenIndex::class)->name('fishermen');
-    Route::get('/armada', FleetsIndex::class)->name('fleets');
     Route::get('/produksi', ProductionsIndex::class)->name('productions');
     Route::get('/komoditas', CommoditiesIndex::class)->name('commodities');
     Route::get('/sarana', InfrastructuresIndex::class)->name('infrastructures');

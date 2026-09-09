@@ -8,7 +8,6 @@ use App\Models\DevelopmentPlan;
 use App\Models\Downloadable;
 use App\Models\Fisherman;
 use App\Models\FisheryProduction;
-use App\Models\Fleet;
 use App\Models\Infrastructure;
 use App\Models\MapZone;
 use App\Models\NewsPost;
@@ -48,7 +47,8 @@ class DatabaseSeeder extends Seeder
         PopulationStat::query()->create(['year' => 2023, 'total' => 3380, 'male' => 1690, 'female' => 1690, 'growth_percent' => 1.80]);
         PopulationStat::query()->create(['year' => 2024, 'total' => 3452, 'male' => 1728, 'female' => 1724, 'growth_percent' => 2.10]);
 
-        Resident::factory()->count(80)->create();
+        Resident::factory()->count(250)->create(['occupation' => 'Nelayan']);
+        Resident::factory()->count(100)->create();
 
         // Distribusi usia sesuai desain: 15-24 12.5%, 25-34 24.8%, 35-44 32.4%, 45-54 18.6%, ≥55 11.7% dari 612
         $ageBuckets = [
@@ -64,13 +64,6 @@ class DatabaseSeeder extends Seeder
                 'age' => fake()->numberBetween($min, $max),
             ]);
         }
-
-        Fleet::query()->insert([
-            ['name' => 'Perahu Motor', 'type' => 'motor', 'count' => 210, 'description' => 'Armada perahu motor kecil', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Kapal Purse Seine', 'type' => 'purse_seine', 'count' => 48, 'description' => 'Kapal pukat cincin', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Bagan', 'type' => 'bagan', 'count' => 95, 'description' => 'Bagan tancap/apung', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Jukung', 'type' => 'jukung', 'count' => 75, 'description' => 'Jukung tradisional', 'created_at' => now(), 'updated_at' => now()],
-        ]);
 
         $productions = [
             [2020, 980, 12_500_000_000],

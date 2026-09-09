@@ -12,6 +12,7 @@ use App\Models\NewsPost;
 use App\Models\Resident;
 use App\Models\User;
 use App\Models\VillageProfile;
+use App\Services\DashboardStatsService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -20,6 +21,21 @@ it('allows guests to view the beranda dashboard', function () {
     $this->get(route('home'))
         ->assertSuccessful()
         ->assertSee('Dashboard Monografi Kelurahan Pangali-Ali');
+});
+
+it('shows population and fishermen KPI from residents on beranda', function () {
+    Resident::factory()->count(5)->create(['occupation' => 'Pedagang']);
+    Resident::factory()->count(3)->create(['occupation' => 'Nelayan']);
+
+    $kpis = app(DashboardStatsService::class)->kpis();
+
+    expect($kpis['population']['value'])->toBe('8')
+        ->and($kpis['fishermen']['value'])->toBe('3');
+
+    $this->get(route('home'))
+        ->assertSuccessful()
+        ->assertSee('Jumlah Penduduk')
+        ->assertSee('Jumlah Nelayan');
 });
 
 it('allows guests to view public menu pages', function () {

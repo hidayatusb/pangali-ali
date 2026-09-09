@@ -5,27 +5,20 @@ namespace App\Services;
 use App\Models\Commodity;
 use App\Models\Fisherman;
 use App\Models\FisheryProduction;
-use App\Models\Fleet;
 use App\Models\Infrastructure;
 use App\Models\NewsPost;
-use App\Models\PopulationStat;
 use App\Models\Resident;
 use Illuminate\Support\Collection;
 
 class DashboardStatsService
 {
     /**
-     * @return array{population: array{value: string, change: string|null}, fishermen: array{value: string, change: string|null}, fleets: array{value: string, change: string|null}, production: array{value: string, change: string|null}, economy: array{value: string, change: string|null}}
+     * @return array{population: array{value: string, change: string|null}, fishermen: array{value: string, change: string|null}, production: array{value: string, change: string|null}, economy: array{value: string, change: string|null}}
      */
     public function kpis(): array
     {
-        $residentCount = Resident::query()->count();
-        $latestPopulation = PopulationStat::query()->orderByDesc('year')->first();
-        $previousPopulation = PopulationStat::query()->orderByDesc('year')->skip(1)->first();
-        $populationTotal = $residentCount > 0 ? $residentCount : (int) ($latestPopulation?->total ?? 0);
-
-        $fishermenCount = Fisherman::query()->active()->count();
-        $fleetTotal = (int) Fleet::query()->sum('count');
+        $populationTotal = Resident::query()->count();
+        $fishermenCount = Resident::query()->fishermen()->count();
 
         $latestProduction = FisheryProduction::query()->orderByDesc('year')->first();
         $previousProduction = FisheryProduction::query()->orderByDesc('year')->skip(1)->first();
@@ -33,15 +26,11 @@ class DashboardStatsService
         return [
             'population' => [
                 'value' => number_format($populationTotal, 0, ',', '.'),
-                'change' => $this->formatChange($latestPopulation?->growth_percent ?? $this->percentChange($previousPopulation?->total, $latestPopulation?->total)),
+                'change' => null,
             ],
             'fishermen' => [
                 'value' => number_format($fishermenCount, 0, ',', '.'),
-                'change' => '↑ 3,4%',
-            ],
-            'fleets' => [
-                'value' => number_format($fleetTotal, 0, ',', '.'),
-                'change' => '↑ 5,2%',
+                'change' => null,
             ],
             'production' => [
                 'value' => number_format((float) ($latestProduction?->total_ton ?? 0), 0, ',', '.').' Ton',

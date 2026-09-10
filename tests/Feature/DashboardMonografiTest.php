@@ -304,6 +304,32 @@ it('allows admin to create a news post', function () {
     expect(NewsPost::query()->where('title', 'Berita Uji Dashboard')->exists())->toBeTrue();
 });
 
+it('allows admin to upload a news image', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->admin()->create();
+    $image = UploadedFile::fake()->image('berita-pantai.jpg', 800, 450);
+
+    Livewire::actingAs($admin)
+        ->test(NewsIndex::class)
+        ->call('create')
+        ->set('title', 'Berita Dengan Gambar')
+        ->set('excerpt', 'Ringkasan dengan foto')
+        ->set('body', 'Isi berita dengan foto')
+        ->set('published_at', now()->format('Y-m-d'))
+        ->set('is_published', true)
+        ->set('image', $image)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $post = NewsPost::query()->where('title', 'Berita Dengan Gambar')->first();
+
+    expect($post)->not->toBeNull()
+        ->and($post->image_path)->not->toBeNull();
+
+    Storage::disk('public')->assertExists($post->image_path);
+});
+
 it('allows admin to upload a downloadable file', function () {
     Storage::fake('public');
 
